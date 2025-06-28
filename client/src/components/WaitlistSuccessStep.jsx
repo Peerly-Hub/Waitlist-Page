@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
 import { motion } from "framer-motion";
-import { FaCheckCircle, FaMagic } from "react-icons/fa";
+import { FaCheckCircle } from "react-icons/fa";
 import { useWaitlist } from "../context/WaitlistContext"; // assuming you used Context
 
 const WaitlistSuccessStep = () => {
@@ -14,7 +14,7 @@ const WaitlistSuccessStep = () => {
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-md w-full bg-[#1b1b2f] p-8 rounded-2xl shadow-xl text-center border border-[#2c2c42]"
       >
-        <h2 className="text-2xl font-bold mb-1 text-white">Welcome aboard!</h2>
+        <h2 className="text-2xl font-bold mb-1 text-white">Welcome!</h2>
         <p className="text-sm text-gray-400 mb-6">
           You're now part of the Peerly community
         </p>
@@ -39,17 +39,14 @@ const WaitlistSuccessStep = () => {
           <h4 className="text-lg font-bold mb-4 text-white">What's Next?</h4>
           <div className="space-y-3 text-left">
             <div className="flex items-center space-x-3">
-              <FaMagic className="text-purple-400" />
               <span className="text-gray-300">Get notified when we launch</span>
             </div>
             <div className="flex items-center space-x-3">
-              <FaMagic className="text-blue-400" />
               <span className="text-gray-300">
                 Early access to all features
               </span>
             </div>
             <div className="flex items-center space-x-3">
-              <FaMagic className="text-green-400" />
               <span className="text-gray-300">
                 Boost your profile with early adopter badge
               </span>

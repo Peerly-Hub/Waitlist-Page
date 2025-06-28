@@ -9,7 +9,6 @@ export const WaitlistProvider = ({ children }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    // other fields you collect in future
   });
 
   const updateFormData = (newData) =>
