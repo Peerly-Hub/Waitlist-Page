@@ -3,8 +3,12 @@ import WaitlistFormStep1 from "./components/WaitlistFormStep1";
 import { Routes, Route } from "react-router-dom";
 import WaitlistFormStep3 from "./components/WaitlistFormStep3";
 import WaitlistSuccessStep from "./components/WaitlistSuccessStep";
+import { useFavicon } from "./hooks/useFavicon";
 
 const App = () => {
+  // Set favicon from Firebase Storage
+  useFavicon();
+
   return (
     <Routes>
       <Route path="/" element={<WaitlistFormStep1 />} />
