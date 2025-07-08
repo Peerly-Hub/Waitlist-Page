@@ -5,7 +5,13 @@ import { FaCheckCircle } from "react-icons/fa";
 import { useWaitlist } from "../context/WaitlistContext"; // assuming you used Context
 
 const WaitlistSuccessStep = () => {
-  const { formData } = useWaitlist();
+  const { formData, clearForm } = useWaitlist();
+  
+  // Clear form data after successful submission (optional)
+  React.useEffect(() => {
+    // You can uncomment this if you want to clear form data after success
+    // clearForm();
+  }, [clearForm]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0b0b15] to-[#14142b] text-white px-4 py-10">
@@ -34,6 +40,12 @@ const WaitlistSuccessStep = () => {
           We'll send early access details to{" "}
           <span className="text-white">{formData.email}</span>
         </p>
+        
+        {formData.role && (
+          <p className="text-sm text-gray-400 mt-2">
+            Your role: <span className="text-purple-400 font-medium">{formData.role}</span>
+          </p>
+        )}
 
         <div className="mt-8 bg-[#2a2a40] rounded-xl p-5 border border-[#3c3c58]">
           <h4 className="text-lg font-bold mb-4 text-white">What's Next?</h4>

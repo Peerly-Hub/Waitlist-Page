@@ -3,9 +3,13 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FaUpload } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useWaitlist } from "../context/WaitlistContext";
+import { useLogo } from "../hooks/useLogo";
 
 const WaitlistFormStep3 = () => {
   const navigate = useNavigate();
+  const { updateFormData, submitToFirebase, isLoading, error } = useWaitlist();
+  const { logoUrl, isLoading: logoLoading } = useLogo();
   const [resumeFile, setResumeFile] = useState(null);
   const [linkedIn, setLinkedIn] = useState("");
   const [portfolio, setPortfolio] = useState("");
@@ -27,8 +31,39 @@ const WaitlistFormStep3 = () => {
     }
   };
 
-  const handleSkip = () => navigate("/success");
-  const handleCompleteProfile = () => navigate("/success");
+  const handleSkip = async () => {
+    // Update form data without profile info and submit
+    updateFormData({ 
+      resume: null, 
+      linkedIn: "", 
+      portfolio: "" 
+    });
+    
+    // Use setTimeout to ensure state is updated before submission
+    setTimeout(async () => {
+      const result = await submitToFirebase();
+      if (result.success) {
+        navigate("/success");
+      }
+    }, 100);
+  };
+  
+  const handleCompleteProfile = async () => {
+    // Update form data with all profile info and submit
+    updateFormData({ 
+      resume: resumeFile, 
+      linkedIn, 
+      portfolio 
+    });
+    
+    // Use setTimeout to ensure state is updated before submission
+    setTimeout(async () => {
+      const result = await submitToFirebase();
+      if (result.success) {
+        navigate("/success");
+      }
+    }, 100);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b15] to-[#14142b] text-white px-4 py-10 flex items-center justify-center">
@@ -38,8 +73,18 @@ const WaitlistFormStep3 = () => {
         className="w-full max-w-2xl bg-[#1b1b2f] p-6 sm:p-8 rounded-2xl shadow-lg space-y-6"
       >
         {/* Logo */}
-        <div className="w-24 h-24 mx-auto rounded-full bg-gray-700 flex items-center justify-center">
-          <span className="text-white font-bold text-2xl">Logo</span>
+        <div className="w-48 h-48 mx-auto flex items-center justify-center">
+          {logoLoading ? (
+            <div className="animate-pulse bg-gray-600 w-full h-full rounded"></div>
+          ) : logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt="Peerly Logo" 
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <span className="text-white font-bold text-2xl">Logo</span>
+          )}
         </div>
 
         {/* Title */}
@@ -139,19 +184,38 @@ const WaitlistFormStep3 = () => {
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="p-3 rounded-md bg-red-500/10 border border-red-500/20">
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            </div>
+          )}
+
           {/* Buttons */}
           <div className="mt-8 space-y-3">
             <button
               onClick={handleCompleteProfile}
-              className="w-full py-3 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 font-semibold hover:opacity-90 transition-opacity"
+              disabled={isLoading}
+              className="w-full py-3 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              Complete Profile
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {resumeFile ? "Uploading resume & submitting..." : "Submitting..."}
+                </>
+              ) : (
+                "Complete Profile"
+              )}
             </button>
             <button
               onClick={handleSkip}
-              className="w-full py-2 text-sm text-gray-400 hover:text-white underline"
+              disabled={isLoading}
+              className="w-full py-2 text-sm text-gray-400 hover:text-white underline disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Skip for now
+              {isLoading ? "Processing..." : "Skip for now"}
             </button>
           </div>
         </div>

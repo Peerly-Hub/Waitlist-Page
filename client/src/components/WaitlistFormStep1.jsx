@@ -3,20 +3,26 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useWaitlist } from "../context/WaitlistContext";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebase/config";
+import { useLogo } from "../hooks/useLogo";
 
 const WaitlistFormStep1 = () => {
   const navigate = useNavigate();
   const { updateFormData } = useWaitlist();
+  const { logoUrl, isLoading: logoLoading } = useLogo();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
 
-  const [errors, setErrors] = useState({ name: "", email: "" });
+  const [errors, setErrors] = useState({ name: "", email: "", contact: "" });
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailExistsMessage, setEmailExistsMessage] = useState("");
 
   const validate = () => {
     let valid = true;
-    const newErrors = { name: "", email: "" };
+    const newErrors = { name: "", email: "", contact: "" };
 
     if (name.trim() === "") {
       newErrors.name = "Name is required.";
@@ -48,10 +54,46 @@ const WaitlistFormStep1 = () => {
     return valid;
   };
 
-  const handleContinue = () => {
+  const checkEmailExists = async (emailToCheck) => {
+    try {
+      const q = query(
+        collection(db, "waitlist"), 
+        where("email", "==", emailToCheck.toLowerCase().trim())
+      );
+      const querySnapshot = await getDocs(q);
+      return !querySnapshot.empty;
+    } catch (error) {
+      console.error("Error checking email:", error);
+      return false;
+    }
+  };
+
+  const handleContinue = async () => {
+    // Clear previous messages
+    setEmailExistsMessage("");
+    
     if (validate()) {
-      updateFormData({ name, email });
-      navigate("/your-role");
+      setIsCheckingEmail(true);
+      
+      try {
+        // Check if email already exists
+        const emailExists = await checkEmailExists(email);
+        
+        if (emailExists) {
+          setEmailExistsMessage("Your request already exists. We will get back to you soon!");
+          setIsCheckingEmail(false);
+          return;
+        }
+        
+        // If email doesn't exist, proceed
+        updateFormData({ name, email: email.toLowerCase().trim(), contact });
+        navigate("/your-role");
+      } catch (error) {
+        console.error("Error during email check:", error);
+        setEmailExistsMessage("Something went wrong. Please try again.");
+      } finally {
+        setIsCheckingEmail(false);
+      }
     }
   };
 
@@ -63,8 +105,18 @@ const WaitlistFormStep1 = () => {
         className="w-full max-w-2xl bg-[#1b1b2f] p-6 sm:p-8 rounded-2xl shadow-lg space-y-6"
       >
         {/* Logo */}
-        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gray-700 flex items-center justify-center">
-          <span className="text-white font-bold text-lg sm:text-2xl">Logo</span>
+        <div className="w-40 h-40 sm:w-48 sm:h-48 mx-auto flex items-center justify-center">
+          {logoLoading ? (
+            <div className="animate-pulse bg-gray-600 w-full h-full rounded"></div>
+          ) : logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt="Peerly Logo" 
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <span className="text-white font-bold text-lg sm:text-2xl">Logo</span>
+          )}
         </div>
 
         {/* Title */}
@@ -144,12 +196,30 @@ const WaitlistFormStep1 = () => {
             )}
           </div>
 
+          {/* Email Exists Message */}
+          {emailExistsMessage && (
+            <div className="p-3 rounded-md bg-green-500/10 border border-green-500/20">
+              <p className="text-green-400 text-sm text-center">{emailExistsMessage}</p>
+            </div>
+          )}
+
           {/* Button */}
           <button
             onClick={handleContinue}
-            className="w-full py-3 mt-4 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 font-semibold hover:opacity-90 transition-opacity text-sm sm:text-base"
+            disabled={isCheckingEmail}
+            className="w-full py-3 mt-4 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 font-semibold hover:opacity-90 transition-opacity text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            Continue
+            {isCheckingEmail ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Checking...
+              </>
+            ) : (
+              "Continue"
+            )}
           </button>
         </div>
       </motion.div>

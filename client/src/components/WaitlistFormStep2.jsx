@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useWaitlist } from "../context/WaitlistContext";
+import { useLogo } from "../hooks/useLogo";
 
 const roles = [
   { title: "Learner", desc: "I want to develop real world skills" },
@@ -17,6 +19,8 @@ const roles = [
 
 const WaitlistFormStep2 = () => {
   const navigate = useNavigate();
+  const { updateFormData } = useWaitlist();
+  const { logoUrl, isLoading: logoLoading } = useLogo();
   const [selectedRole, setSelectedRole] = useState("");
   const [showWarning, setShowWarning] = useState(false);
 
@@ -29,6 +33,7 @@ const WaitlistFormStep2 = () => {
     if (!selectedRole) {
       setShowWarning(true);
     } else {
+      updateFormData({ role: selectedRole });
       navigate("/profile-links");
     }
   };
@@ -41,8 +46,18 @@ const WaitlistFormStep2 = () => {
         className="w-full max-w-2xl bg-[#1b1b2f] p-6 sm:p-8 rounded-2xl shadow-lg space-y-6"
       >
         {/* Logo */}
-        <div className="w-24 h-24 mx-auto rounded-full bg-gray-700 flex items-center justify-center">
-          <span className="text-white font-bold text-2xl">Logo</span>
+        <div className="w-48 h-48 mx-auto flex items-center justify-center">
+          {logoLoading ? (
+            <div className="animate-pulse bg-gray-600 w-full h-full rounded"></div>
+          ) : logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt="Peerly Logo" 
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <span className="text-white font-bold text-2xl">Logo</span>
+          )}
         </div>
 
         {/* Title */}
