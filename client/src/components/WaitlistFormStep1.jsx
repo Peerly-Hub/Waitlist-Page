@@ -6,6 +6,7 @@ import { useWaitlist } from "../context/WaitlistContext";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useLogo } from "../hooks/useLogo";
+import { toast } from "sonner";
 
 const WaitlistFormStep1 = () => {
   const navigate = useNavigate();
@@ -14,15 +15,13 @@ const WaitlistFormStep1 = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [contact, setContact] = useState("");
 
   const [errors, setErrors] = useState({ name: "", email: "", contact: "" });
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [emailExistsMessage, setEmailExistsMessage] = useState("");
 
   const validate = () => {
     let valid = true;
-    const newErrors = { name: "", email: "", contact: "" };
+    const newErrors = { name: "", email: "" };
 
     if (name.trim() === "") {
       newErrors.name = "Name is required.";
@@ -42,14 +41,6 @@ const WaitlistFormStep1 = () => {
       valid = false;
     }
 
-    if (contact.trim() !== "") {
-      const contactDigits = contact.replace(/\D/g, "");
-      if (!/^\d{10}$/.test(contactDigits)) {
-        newErrors.contact = "Enter a valid 10-digit phone number.";
-        valid = false;
-      }
-    }
-
     setErrors(newErrors);
     return valid;
   };
@@ -57,7 +48,7 @@ const WaitlistFormStep1 = () => {
   const checkEmailExists = async (emailToCheck) => {
     try {
       const q = query(
-        collection(db, "waitlist"), 
+        collection(db, "waitlist"),
         where("email", "==", emailToCheck.toLowerCase().trim())
       );
       const querySnapshot = await getDocs(q);
@@ -69,31 +60,31 @@ const WaitlistFormStep1 = () => {
   };
 
   const handleContinue = async () => {
-    // Clear previous messages
-    setEmailExistsMessage("");
-    
     if (validate()) {
       setIsCheckingEmail(true);
-      
+
       try {
-        // Check if email already exists
         const emailExists = await checkEmailExists(email);
-        
+
         if (emailExists) {
-          setEmailExistsMessage("Your request already exists. We will get back to you soon!");
+          toast.info(
+            "Your request already exists. We will get back to you soon!"
+          );
+
           setIsCheckingEmail(false);
           return;
         }
-        
-        // If email doesn't exist, proceed
-        updateFormData({ name, email: email.toLowerCase().trim(), contact });
-        navigate("/your-role");
+
+        updateFormData({ name, email: email.toLowerCase().trim() });
+        navigate("/role-selection");
       } catch (error) {
         console.error("Error during email check:", error);
-        setEmailExistsMessage("Something went wrong. Please try again.");
+        toast.error("Something went wrong. Please try again.");
       } finally {
         setIsCheckingEmail(false);
       }
+    } else {
+      toast.warning("Please correct the form errors before continuing.");
     }
   };
 
@@ -109,13 +100,15 @@ const WaitlistFormStep1 = () => {
           {logoLoading ? (
             <div className="animate-pulse bg-gray-600 w-full h-full rounded"></div>
           ) : logoUrl ? (
-            <img 
-              src={logoUrl} 
-              alt="Peerly Logo" 
+            <img
+              src={logoUrl || "/image.png"}
+              alt="Peerly Logo"
               className="w-full h-full object-contain"
             />
           ) : (
-            <span className="text-white font-bold text-lg sm:text-2xl">Logo</span>
+            <span className="text-white font-bold text-lg sm:text-2xl">
+              Logo
+            </span>
           )}
         </div>
 
@@ -135,15 +128,14 @@ const WaitlistFormStep1 = () => {
           <div className="w-full h-2 bg-gray-700 rounded-full">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
-              style={{ width: "33.33%" }}
+              style={{ width: "25%" }}
             />
           </div>
           <p className="text-xs sm:text-sm text-gray-400 text-center">
-            Step 1 of 3 — 33% Complete
+            Step 1 of 4 — 25% Complete
           </p>
         </div>
 
-        {/* Form */}
         <div className="space-y-4">
           {/* Name */}
           <div>
@@ -179,30 +171,6 @@ const WaitlistFormStep1 = () => {
             )}
           </div>
 
-          {/* Contact */}
-          <div>
-            <label className="block text-sm font-semibold mb-1">
-              Contact Number <span className="text-gray-400">(Optional)</span>
-            </label>
-            <input
-              type="tel"
-              placeholder="Enter your contact number"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-              className="w-full p-3 rounded-md bg-[#2a2a40] border border-gray-600 text-white text-sm sm:text-base"
-            />
-            {errors.contact && (
-              <p className="text-red-400 text-sm mt-1">{errors.contact}</p>
-            )}
-          </div>
-
-          {/* Email Exists Message */}
-          {emailExistsMessage && (
-            <div className="p-3 rounded-md bg-green-500/10 border border-green-500/20">
-              <p className="text-green-400 text-sm text-center">{emailExistsMessage}</p>
-            </div>
-          )}
-
           {/* Button */}
           <button
             onClick={handleContinue}
@@ -211,9 +179,25 @@ const WaitlistFormStep1 = () => {
           >
             {isCheckingEmail ? (
               <>
-                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Checking...
               </>

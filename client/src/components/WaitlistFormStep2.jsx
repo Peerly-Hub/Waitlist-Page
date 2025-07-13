@@ -1,40 +1,53 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useWaitlist } from "../context/WaitlistContext";
 import { useLogo } from "../hooks/useLogo";
+import { toast } from "sonner";
 
 const roles = [
-  { title: "Learner", desc: "I want to develop real world skills" },
   {
-    title: "Employer",
-    desc: "I'm looking to hire interns or freelancers",
+    title: "College Student",
+    desc: "Currently pursuing a degree in college",
+    key: "college-details",
   },
-  { title: "Freelancer", desc: "I'm looking for gigs and projects" },
-  { title: "Mentor", desc: "I want to guide and support others" },
-  { title: "Partner", desc: "I want to organize events or start clubs" },
-  { title: "Creator", desc: "I want to share content or resources" },
+  {
+    title: "Aspirant",
+    desc: "Currently studying in high school",
+    key: "aspirant-details",
+  },
+  {
+    title: "College Alumni",
+    desc: "Completed studies, part of the alumni network",
+    key: "alumni-details",
+  },
 ];
 
 const WaitlistFormStep2 = () => {
   const navigate = useNavigate();
   const { updateFormData } = useWaitlist();
   const { logoUrl, isLoading: logoLoading } = useLogo();
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRole, setSelectedRole] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
 
-  const handleSelect = (roleTitle) => {
-    setSelectedRole(roleTitle);
+  const handleSelect = (rolekey) => {
+    setSelectedRole(rolekey);
     setShowWarning(false);
   };
+
+  useEffect(() => {
+    if (showWarning) {
+      toast.warning("Please select a role to continue.");
+    }
+  }, [showWarning]);
 
   const handleContinue = () => {
     if (!selectedRole) {
       setShowWarning(true);
     } else {
       updateFormData({ role: selectedRole });
-      navigate("/profile-links");
+      navigate(`/${selectedRole}`);
     }
   };
 
@@ -50,9 +63,9 @@ const WaitlistFormStep2 = () => {
           {logoLoading ? (
             <div className="animate-pulse bg-gray-600 w-full h-full rounded"></div>
           ) : logoUrl ? (
-            <img 
-              src={logoUrl} 
-              alt="Peerly Logo" 
+            <img
+              src={logoUrl || "/image.png"}
+              alt="Peerly Logo"
               className="w-full h-full object-contain"
             />
           ) : (
@@ -76,11 +89,11 @@ const WaitlistFormStep2 = () => {
           <div className="w-full h-2 bg-gray-700 rounded-full">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
-              style={{ width: "66.66%" }}
+              style={{ width: "50%" }}
             ></div>
           </div>
           <p className="text-sm text-gray-400 text-center">
-            Step 2 of 3 — 66% Complete
+            Step 2 of 4 — 50% Complete
           </p>
         </div>
 
@@ -92,14 +105,14 @@ const WaitlistFormStep2 = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {roles.map((role, idx) => {
-            const isSelected = selectedRole === role.title;
+            const isSelected = selectedRole === role.key;
             return (
               <div
                 key={idx}
-                onClick={() => handleSelect(role.title)}
-                className={`p-4 rounded-lg cursor-pointer transition-all border text-left ${
+                onClick={() => handleSelect(role.key)}
+                className={`p-4 rounded-lg cursor-pointer transition-all border text-left flex flex-col justify-center ${
                   isSelected
                     ? "bg-gradient-to-r from-purple-600 to-blue-600 border-transparent ring-2 ring-purple-400 opacity-95"
                     : "bg-[#2a2a40] border-gray-600 hover:border-purple-500"
@@ -117,13 +130,6 @@ const WaitlistFormStep2 = () => {
             );
           })}
         </div>
-
-        {/* Warning Text */}
-        {showWarning && (
-          <p className="text-red-400 text-sm text-center">
-            Please select a role to continue.
-          </p>
-        )}
 
         {/* Continue Button */}
         <button

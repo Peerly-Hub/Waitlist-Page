@@ -1,10 +1,11 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaUpload } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useWaitlist } from "../context/WaitlistContext";
 import { useLogo } from "../hooks/useLogo";
+import { toast } from "sonner";
 
 const WaitlistFormStep3 = () => {
   const navigate = useNavigate();
@@ -12,7 +13,6 @@ const WaitlistFormStep3 = () => {
   const { logoUrl, isLoading: logoLoading } = useLogo();
   const [resumeFile, setResumeFile] = useState(null);
   const [linkedIn, setLinkedIn] = useState("");
-  const [portfolio, setPortfolio] = useState("");
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -31,15 +31,21 @@ const WaitlistFormStep3 = () => {
     }
   };
 
+  const isValidURL = (url) => {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch (_) {
+      return false;
+    }
+  };
+
   const handleSkip = async () => {
-    // Update form data without profile info and submit
-    updateFormData({ 
-      resume: null, 
-      linkedIn: "", 
-      portfolio: "" 
+    updateFormData({
+      resume: null,
+      linkedIn: "",
     });
-    
-    // Use setTimeout to ensure state is updated before submission
+
     setTimeout(async () => {
       const result = await submitToFirebase();
       if (result.success) {
@@ -47,16 +53,22 @@ const WaitlistFormStep3 = () => {
       }
     }, 100);
   };
-  
+
   const handleCompleteProfile = async () => {
-    // Update form data with all profile info and submit
-    updateFormData({ 
-      resume: resumeFile, 
-      linkedIn, 
-      portfolio 
-    });
-    
-    // Use setTimeout to ensure state is updated before submission
+    if (!resumeFile && !linkedIn) {
+      toast.error("Please add at least Resume or LinkedIn!");
+      return;
+    }
+
+    if (linkedIn && !isValidURL(linkedIn)) {
+      toast.error(
+        "Please enter a valid LinkedIn URL (starts with http or https)."
+      );
+      return;
+    }
+
+    updateFormData({ resume: resumeFile, linkedIn });
+
     setTimeout(async () => {
       const result = await submitToFirebase();
       if (result.success) {
@@ -77,9 +89,9 @@ const WaitlistFormStep3 = () => {
           {logoLoading ? (
             <div className="animate-pulse bg-gray-600 w-full h-full rounded"></div>
           ) : logoUrl ? (
-            <img 
-              src={logoUrl} 
-              alt="Peerly Logo" 
+            <img
+              src={logoUrl}
+              alt="Peerly Logo"
               className="w-full h-full object-contain"
             />
           ) : (
@@ -107,7 +119,7 @@ const WaitlistFormStep3 = () => {
             ></div>
           </div>
           <p className="text-sm text-gray-400 text-center">
-            Step 3 of 3 — 100% Complete
+            Step 4 of 4 — 100% Complete
           </p>
         </div>
 
@@ -155,7 +167,6 @@ const WaitlistFormStep3 = () => {
 
           {/* Profile Links */}
           <div className="space-y-5">
-            {/* LinkedIn */}
             <div>
               <label className="text-sm font-medium mb-1 flex items-center gap-2">
                 LinkedIn Profile
@@ -165,20 +176,6 @@ const WaitlistFormStep3 = () => {
                 value={linkedIn}
                 onChange={(e) => setLinkedIn(e.target.value)}
                 placeholder="https://linkedin.com/in/yourprofile"
-                className="w-full p-3 rounded-md bg-[#2a2a40] border border-gray-600 text-white text-sm"
-              />
-            </div>
-
-            {/* Portfolio */}
-            <div>
-              <label className="text-sm font-medium mb-1 flex items-center gap-2">
-                Personal Portfolio / Website
-              </label>
-              <input
-                type="url"
-                value={portfolio}
-                onChange={(e) => setPortfolio(e.target.value)}
-                placeholder="https://yourwebsite.com"
                 className="w-full p-3 rounded-md bg-[#2a2a40] border border-gray-600 text-white text-sm"
               />
             </div>
@@ -200,11 +197,29 @@ const WaitlistFormStep3 = () => {
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
-                  {resumeFile ? "Uploading resume & submitting..." : "Submitting..."}
+                  {resumeFile
+                    ? "Uploading resume & submitting..."
+                    : "Submitting..."}
                 </>
               ) : (
                 "Complete Profile"
